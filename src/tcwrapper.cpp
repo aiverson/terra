@@ -613,10 +613,20 @@ public:
 #endif
 };
 
-static llvm::sys::TimeValue ZeroTime() {
+static
+    #if LLVM_VERSION <= 39
+    llvm::sys::TimeValue
+    #else
+    llvm::sys::TimePoint<>
+    #endif
+    ZeroTime() {
 #if LLVM_VERSION >= 36
+#if LLVM_VERSION <= 39
     return llvm::sys::TimeValue::ZeroTime();
-#else   
+    #else
+    return llvm::sys::TimePoint<>();
+    #endif
+#else
     return llvm::sys::TimeValue::ZeroTime;
 #endif
 }
