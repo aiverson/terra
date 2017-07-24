@@ -612,7 +612,7 @@ public:
   virtual void setName(StringRef Name_) override { Name = Name_; }
 #endif
 };
-#if LLVM_VERSION <= 39
+
 static llvm::sys::TimeValue ZeroTime() {
 #if LLVM_VERSION >= 36
     return llvm::sys::TimeValue::ZeroTime();
