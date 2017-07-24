@@ -2961,12 +2961,16 @@ static int terra_linkllvmimpl(lua_State * L) {
     #else
     ErrorOr<Module *> mm = parseBitcodeFile(mb.get().get(),*TT->ctx);
     #endif
-    if(!mm)
+    if(!mm) {
         #if LLVM_VERSION < 40
         terra_reporterror(T, "llvm: %s\n", mm.getError().message().c_str());
         #else
-    terra_reporterror(T, "llvm: %s\n", mm.takeError().Payload->message().c_str());
+        std::string buff = "";
+        raw_string_ostream errinfo(buff);
+        logAllUnhandledErrors(mm.takeError(), errinfo, "");
+        terra_reporterror(T, "llvm: %s\n", errinfo.str());
 	#endif
+    }
     #if LLVM_VERSION >= 37
     Module * M = mm.get().release();
     #else
