@@ -37,9 +37,15 @@
 #include "llvm/ExecutionEngine/JITEventListener.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/Support/DynamicLibrary.h"
-#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm-c/Linker.h"
+
+#if LLVM_VERSION <= 39
+#include "llvm/Bitcode/ReaderWriter.h"
+#else
+#include "llvm/Bitcode/BitcodeReader.h"
+#include "llvm/Bitcode/BitcodeWriter.h"
+#endif
 
 #if LLVM_VERSION == 32
 #include "llvmheaders_32.h"
@@ -57,6 +63,8 @@
 #include "llvmheaders_38.h"
 #elif LLVM_VERSION == 39
 #include "llvmheaders_39.h"
+#elif LLVM_VERSION == 40
+#include "llvmheaders_40.h"
 #else
 #error "unsupported LLVM version"
 //for OSX code completion

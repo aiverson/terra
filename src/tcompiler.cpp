@@ -28,11 +28,14 @@ extern "C" {
 #include "tcompilerstate.h" //definition of terra_CompilerState which contains LLVM state
 #include "tobj.h"
 #include "tinline.h"
+#include "llvmheaders.h"
+/*
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/Atomic.h"
 #include "llvm/Support/FileSystem.h"
+*/
 #include "tllvmutil.h"
 
 using namespace llvm;
@@ -2951,13 +2954,19 @@ static int terra_linkllvmimpl(lua_State * L) {
         terra_reporterror(T, "llvm: %s\n", mb.getError().message().c_str());
     #if LLVM_VERSION == 36
     ErrorOr<Module *> mm = parseBitcodeFile(mb.get()->getMemBufferRef(),*TT->ctx);
-    #elif LLVM_VERSION >= 37
+    #elif LLVM_VERSION >= 37 && LLVM_VERSION <= 39
     ErrorOr<std::unique_ptr<Module>> mm = parseBitcodeFile(mb.get()->getMemBufferRef(),*TT->ctx);
+    #elif LLVM_VERSION >= 40
+    Expected<std::unique_ptr<Module>> mm = parseBitcodeFile(mb.get()->getMemBufferRef(),*TT->ctx);
     #else
     ErrorOr<Module *> mm = parseBitcodeFile(mb.get().get(),*TT->ctx);
     #endif
     if(!mm)
+        #if LLVM_VERSION < 40
         terra_reporterror(T, "llvm: %s\n", mm.getError().message().c_str());
+        #else
+    terra_reporterror(T, "llvm: %s\n", mm.takeError().Payload->message().c_str());
+	#endif
     #if LLVM_VERSION >= 37
     Module * M = mm.get().release();
     #else
