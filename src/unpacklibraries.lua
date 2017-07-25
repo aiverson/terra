@@ -1,10 +1,12 @@
 local destination = ...
+local tunpack = unpack or table.unpack
 
 local function exe(cmd,...)
     cmd = string.format(cmd,...)
+    print(cmd)
     local res = { os.execute(cmd) }
     if type(res[1]) == 'number' and res[1] ~= 0 or not res[1] then
-        print('Error during '..cmd..':', table.unpack(res))
+        print('Error during '..cmd..':', tunpack(res))
         error("command failed: "..cmd)
     end
 end
