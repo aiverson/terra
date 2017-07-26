@@ -143,6 +143,8 @@ DYNLIBRARY = release/lib/terra.so
 RELEASE_HEADERS = $(addprefix release/include/terra/,$(LUAHEADERS))
 BIN2C = build/bin2c
 
+LINKLIBS = $(LLVM_LIBRARY_FLAGS) $(SUPPORT_LIBRARY_FLAGS)
+
 #put any install-specific stuff in here
 -include Makefile.inc
 
@@ -186,16 +188,16 @@ build/lua_objects/lj_obj.o:    $(LUAJIT_LIB)
 	mkdir -p build/lua_objects
 	cd build/lua_objects; ar x $(realpath $(LUAJIT_LIB))
 
-$(LIBRARY):	$(RELEASE_HEADERS) $(addprefix build/, $(LIBOBJS)) build/llvm_objects/llvm_list build/lua_objects/lj_obj.o
+$(LIBRARY):	$(RELEASE_HEADERS) $(addprefix build/, $(LIBOBJS)) build/lua_objects/lj_obj.o
 	mkdir -p release/lib
 	rm -f $@
-	$(AR) -cq $@ $(addprefix build/, $(LIBOBJS)) build/llvm_objects/*/*.o build/lua_objects/*.o
+	$(AR) -cq $@ $(addprefix build/, $(LIBOBJS)) build/lua_objects/*.o
 	ranlib $@
 
-$(LIBRARY_NOLUA): 	$(RELEASE_HEADERS) $(addprefix build/, $(LIBOBJS)) build/llvm_objects/llvm_list
+$(LIBRARY_NOLUA): 	$(RELEASE_HEADERS) $(addprefix build/, $(LIBOBJS))
 	mkdir -p release/lib
 	rm -f $@
-	$(AR) -cq $@ $(addprefix build/, $(LIBOBJS)) build/llvm_objects/*/*.o
+	$(AR) -cq $@ $(addprefix build/, $(LIBOBJS))
 
 $(LIBRARY_NOLUA_NOLLVM):	$(RELEASE_HEADERS) $(addprefix build/, $(LIBOBJS))
 	mkdir -p release/lib
@@ -207,7 +209,7 @@ $(DYNLIBRARY):	$(LIBRARY)
 
 $(EXECUTABLE):	$(addprefix build/, $(EXEOBJS)) $(LIBRARY)
 	mkdir -p release/bin release/lib
-	$(CXX) $(addprefix build/, $(EXEOBJS)) -o $@ $(LFLAGS) $(TERRA_STATIC_LIBRARY)  $(SUPPORT_LIBRARY_FLAGS)
+	$(CXX) $(addprefix build/, $(EXEOBJS)) -o $@ $(addprefix build/, $(LIBOBJS)) $(LINKLIBS) $(LFLAGS)  $(SUPPORT_LIBRARY_FLAGS)
 	if [ ! -e terra  ]; then ln -s $(EXECUTABLE) terra; fi;
 
 $(BIN2C):	src/bin2c.c
@@ -217,7 +219,7 @@ $(BIN2C):	src/bin2c.c
 #rule for packaging lua code into a header file
 # fix narrowing warnings by using unsigned char
 build/%.h:	src/%.lua $(PACKAGE_DEPS)
-	$(LUAJIT) -bg $< -t h - | sed "s/char/unsigned char/" > $@
+	$(LUAJIT) -bg $< -t h - > $@
 
 #run clang on a C file to extract the header search paths for this architecture
 #genclangpaths.lua find the path arguments and formats them into a C file that is included by the cwrapper
